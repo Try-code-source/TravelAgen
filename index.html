@@ -98,7 +98,7 @@
       border-radius: 18px 18px 18px 4px;
       border: 1px solid #c5e0f0;
     }
-    .msg-bubble a { color: #1a91d1; text-decoration: underline; }
+    .msg-bubble a { color: #1a91d1; text-decoration: underline; word-break: break-all; }
     .msg-bubble code {
       background: rgba(0,0,0,0.08);
       padding: 2px 6px;
@@ -209,16 +209,6 @@
 
 <script>
   const SURVEY_CODE = "CS4685LR";
-  const ABRUZZO_CONTEXT = [
-    {
-      role: 'user',
-      content: `From now on, act as a travel assistant specialized exclusively in Abruzzo, Italy. The interface has already introduced you as SAM, so never introduce yourself again, never say "I'm SAM," and never repeat your name. Answer the user's question directly. Provide information only about Abruzzo, including its places, attractions, culture, food, nature, accommodation, transportation, events, and travel planning. You may recommend specific hotels, resorts, bed and breakfasts, restaurants, cafés, traditional food venues, attractions, beaches, and other tourism businesses located in Abruzzo. When possible, provide their name, town, and approximate location. Never invent a business, venue, address, or other detail. If you are not confident that the information is accurate, clearly say so and provide a more general recommendation instead. If a user asks about any unrelated topic or another destination, do not answer that question. Politely explain that you can only provide information about Abruzzo and invite the user to ask something about Abruzzo. Do not provide or recommend any website links.`
-    },
-    {
-      role: 'assistant',
-      content: `Understood. I will provide information exclusively about Abruzzo and will politely redirect any unrelated request.`
-    }
-  ];
 
   let history = [];
   let userMsgCount = 0;
@@ -227,8 +217,6 @@
   function renderMarkdown(text) {
     const markdownLinks = [];
 
-    // Salva temporaneamente i link Markdown per evitare che il loro URL
-    // venga elaborato una seconda volta come link scritto per esteso.
     text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
       const placeholder = `@@MARKDOWN_LINK_${markdownLinks.length}@@`;
       markdownLinks.push(`<a href="${url}" target="_blank" rel="noopener noreferrer">${label} 🔗</a>`);
@@ -253,15 +241,11 @@
     return text;
   }
 
-  // Rimuove dalle risposte dell'AI qualsiasi link ricevuto dall'API.
-  // L'unico link ammesso viene aggiunto manualmente più avanti, dopo il codice finale.
-  function removeGeneratedLinks(text) {
+  // Rimuove qualsiasi link generato casualmente durante la conversazione
+  function stripUnwantedLinks(text) {
     return text
-      .replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1')
       .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/gi, '$1')
-      .replace(/https?:\/\/[^\s<>()]+/gi, '')
-      .replace(/[ \t]+([.,!?;:])/g, '$1')
-      .replace(/[ \t]{2,}/g, ' ');
+      .replace(/https?:\/\/[^\s<>()]+/gi, '');
   }
 
   function appendMessage(role, content) {
@@ -310,16 +294,16 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          messages: [...ABRUZZO_CONTEXT, ...history]
+          messages: history
         })
       });
 
       const data = await res.json();
-      let reply = removeGeneratedLinks(
-        data.reply || "Sorry, I didn't understand. Please try again!"
-      );
+      
+      // Pulisce la risposta per evitare che l'AI inserisca link non autorizzati
+      let reply = stripUnwantedLinks(data.reply || "Sorry, I didn't understand. Please try again!");
 
-      // Al 6° messaggio dell'utente vengono mostrati i tre messaggi finali nell'ordine stabilito
+      // Al 6° messaggio dell'utente inserisce L'UNICO link autorizzato
       if (userMsgCount === 6) {
         reply += `\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: https://landingpage20.github.io/abruzzo/`;
       }
@@ -340,4 +324,3 @@
 
 </body>
 </html>
-
