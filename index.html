@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SAM – Travel Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; } 
+
+    body {
+      min-height: 100vh;
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 16px;
+    }
+
+    #chat-container {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid #d0e4f0;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      height: 85vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    #chat-header {
+      background: linear-gradient(90deg, #5bc8f5, #1a91d1);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #header-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    #header-name { color: #fff; font-weight: 700; font-size: 18px; }
+    #header-sub  { color: rgba(255,255,255,0.8); font-size: 13px; }
+    #header-status { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+    #status-label { color: rgba(255,255,255,0.85); font-size: 12px; }
+
+    /* Messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #b0d4e8 transparent;
+    }
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #b0d4e8; border-radius: 2px; }
+
+    .msg-row { display: flex; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.assistant { justify-content: flex-start; }
+
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5bc8f5, #1a91d1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .msg-bubble.user {
+      background: linear-gradient(135deg, #1a91d1, #5bc8f5);
+      color: #fff;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .msg-bubble.assistant {
+      background: #eaf4fb;
+      color: #1a3a4a;
+      border-radius: 18px 18px 18px 4px;
+      border: 1px solid #c5e0f0;
+    }
+    .msg-bubble a { color: #1a91d1; text-decoration: underline; }
+    .msg-bubble code {
+      background: rgba(0,0,0,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    /* Typing indicator */
+    #typing { display: none; }
+    #typing.visible { display: flex; align-items: center; gap: 8px; }
+    #typing-bubble {
+      padding: 12px 18px;
+      background: #eaf4fb;
+      border-radius: 18px 18px 18px 4px;
+      border: 1px solid #c5e0f0;
+      display: flex; gap: 5px; align-items: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #1a91d1;
+      animation: bounce 1s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+
+    /* Input area */
+    #input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #d0e4f0;
+      background: #f7fbfe;
+      display: flex;
+      gap: 10px;
+    }
+    #user-input {
+      flex: 1;
+      background: #ffffff;
+      border: 2px solid #a8d4ed;
+      border-radius: 14px;
+      padding: 12px 16px;
+      color: #1a3a4a;
+      font-size: 14px;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: border 0.2s;
+    }
+    #user-input:focus { border-color: #1a91d1; }
+    #user-input::placeholder { color: #7aafc9; }
+
+    #send-btn {
+      background: linear-gradient(135deg, #1a91d1, #5bc8f5);
+      border: none;
+      border-radius: 14px;
+      width: 48px; height: 48px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.2s;
+    }
+    #send-btn:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="chat-header">
+    <div id="header-avatar">🌍</div>
+    <div>
+      <div id="header-name">SAM</div>
+      <div id="header-sub">Your Travel Assistant AI ✈️</div>
+    </div>
+    <div id="header-status">
+      <div id="status-dot"></div>
+      <span id="status-label">Online</span>
+    </div>
+  </div>
+
+  <div id="messages">
+    <div class="msg-row assistant">
+      <div class="msg-avatar">🌍</div>
+      <div class="msg-bubble assistant">
+        Hello! I'm <strong>SAM</strong>, your personal travel assistant 🌍✈️<br><br>
+        I'll help you discover Abruzzo.<br>What would you like to know about this alluring region?
+      </div>
+    </div>
+
+    <div id="typing">
+      <div class="msg-avatar">🌍</div>
+      <div id="typing-bubble">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <input id="user-input" type="text" placeholder="Ask about a destination, itinerary, tips..."
+      onkeydown="if(event.key==='Enter') sendMessage()" />
+    <button id="send-btn" onclick="sendMessage()">✈️</button>
+  </div>
+</div>
+
+<script>
+  const SURVEY_CODE = "CS4685LR";
+  const ABRUZZO_CONTEXT = [
+    {
+      role: 'user',
+      content: `From now on, act as a travel assistant specialized exclusively in Abruzzo, Italy. The interface has already introduced you as SAM, so never introduce yourself again, never say "I'm SAM," and never repeat your name. Answer the user's question directly. Provide information only about Abruzzo, including its places, attractions, culture, food, nature, accommodation, transportation, events, and travel planning. You may recommend specific hotels, resorts, bed and breakfasts, restaurants, cafés, traditional food venues, attractions, beaches, and other tourism businesses located in Abruzzo. When possible, provide their name, town, and approximate location. Never invent a business, venue, address, or other detail. If you are not confident that the information is accurate, clearly say so and provide a more general recommendation instead. If a user asks about any unrelated topic or another destination, do not answer that question. Politely explain that you can only provide information about Abruzzo and invite the user to ask something about Abruzzo. Do not provide or recommend any website links.`
+    },
+    {
+      role: 'assistant',
+      content: `Understood. I will provide information exclusively about Abruzzo and will politely redirect any unrelated request.`
+    }
+  ];
+
+  let history = [];
+  let userMsgCount = 0;
+  let loading = false;
+
+  function renderMarkdown(text) {
+    const markdownLinks = [];
+
+    // Salva temporaneamente i link Markdown per evitare che il loro URL
+    // venga elaborato una seconda volta come link scritto per esteso.
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
+      const placeholder = `@@MARKDOWN_LINK_${markdownLinks.length}@@`;
+      markdownLinks.push(`<a href="${url}" target="_blank" rel="noopener noreferrer">${label} 🔗</a>`);
+      return placeholder;
+    });
+
+    text = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+        const trailingPunctuation = url.match(/[.,!?;:]+$/)?.[0] || '';
+        const cleanUrl = url.slice(0, url.length - trailingPunctuation.length);
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl} 🔗</a>${trailingPunctuation}`;
+      })
+      .replace(/\n/g, '<br/>');
+
+    markdownLinks.forEach((link, index) => {
+      text = text.replace(`@@MARKDOWN_LINK_${index}@@`, link);
+    });
+
+    return text;
+  }
+
+  // Rimuove dalle risposte dell'AI qualsiasi link ricevuto dall'API.
+  // L'unico link ammesso viene aggiunto manualmente più avanti, dopo il codice finale.
+  function removeGeneratedLinks(text) {
+    return text
+      .replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1')
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/gi, '$1')
+      .replace(/https?:\/\/[^\s<>()]+/gi, '')
+      .replace(/[ \t]+([.,!?;:])/g, '$1')
+      .replace(/[ \t]{2,}/g, ' ');
+  }
+
+  function appendMessage(role, content) {
+    const messages = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${role}`;
+
+    if (role === 'assistant') {
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.textContent = '🌍';
+      row.appendChild(avatar);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble ${role}`;
+    bubble.innerHTML = renderMarkdown(content);
+    row.appendChild(bubble);
+
+    messages.insertBefore(row, typing);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function sendMessage(text) {
+    const input = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const userText = text || input.value.trim();
+    if (!userText || loading) return;
+
+    input.value = '';
+    appendMessage('user', userText);
+    history.push({ role: 'user', content: userText });
+    userMsgCount++;
+
+    loading = true;
+    sendBtn.disabled = true;
+    document.getElementById('typing').classList.add('visible');
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [...ABRUZZO_CONTEXT, ...history]
+        })
+      });
+
+      const data = await res.json();
+      let reply = removeGeneratedLinks(
+        data.reply || "Sorry, I didn't understand. Please try again!"
+      );
+
+      // Al 6° messaggio dell'utente vengono mostrati i tre messaggi finali nell'ordine stabilito
+      if (userMsgCount === 6) {
+        reply += `\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: https://landingpage20.github.io/abruzzo/`;
+      }
+
+      history.push({ role: 'assistant', content: reply });
+      document.getElementById('typing').classList.remove('visible');
+      appendMessage('assistant', reply);
+
+    } catch (e) {
+      document.getElementById('typing').classList.remove('visible');
+      appendMessage('assistant', `⚠️ Communication error: ${e.message}`);
+    }
+
+    loading = false;
+    sendBtn.disabled = false;
+  }
+</script>
+
+</body>
+</html>
