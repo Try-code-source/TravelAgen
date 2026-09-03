@@ -304,7 +304,7 @@
       let reply = stripUnwantedLinks(data.reply || "Sorry, I didn't understand. Please try again!");
 
       // Al 6° messaggio dell'utente inserisce L'UNICO link autorizzato
-      if (userMsgCount === 6) {
+      if (userMsgCount === 5) {
         reply += `\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: https://wwww.abruzzoturismo.it/`;
       }
 
