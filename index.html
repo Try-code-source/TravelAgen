@@ -1,198 +1,353 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAM - Travel Assistant</title>
-    <style>
-        :root {
-            --primary: #0066cc;
-            --bg: #f4f6f8;
-            --chat-bg: #ffffff;
-            --user-msg: #0066cc;
-            --bot-msg: #f1f5f9;
-            --text-dark: #1e293b;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SAM – Travel Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; } 
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
+    body {
+      min-height: 100vh;
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 16px;
+    }
 
-        body {
-            background-color: var(--bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+    #chat-container {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid #d0e4f0;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      height: 85vh;
+      overflow: hidden;
+    }
 
-        .chat-container {
-            width: 100%;
-            max-width: 500px;
-            height: 600px;
-            background: var(--chat-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    /* Header */
+    #chat-header {
+      background: linear-gradient(90deg, #5bc8f5, #1a91d1);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #header-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    #header-name { color: #fff; font-weight: 700; font-size: 18px; }
+    #header-sub  { color: rgba(255,255,255,0.8); font-size: 13px; }
+    #header-status { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+    #status-label { color: rgba(255,255,255,0.85); font-size: 12px; }
 
-        .chat-header {
-            background: var(--primary);
-            color: white;
-            padding: 16px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
+    /* Messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #b0d4e8 transparent;
+    }
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #b0d4e8; border-radius: 2px; }
 
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    .msg-row { display: flex; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.assistant { justify-content: flex-start; }
 
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5bc8f5, #1a91d1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
 
-        .message.bot {
-            background: var(--bot-msg);
-            color: var(--text-dark);
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-        }
+    .msg-bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .msg-bubble.user {
+      background: linear-gradient(135deg, #1a91d1, #5bc8f5);
+      color: #fff;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .msg-bubble.assistant {
+      background: #eaf4fb;
+      color: #1a3a4a;
+      border-radius: 18px 18px 18px 4px;
+      border: 1px solid #c5e0f0;
+    }
+    .msg-bubble a { color: #1a91d1; text-decoration: underline; word-break: break-all; }
+    .msg-bubble code {
+      background: rgba(0,0,0,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
 
-        .message.user {
-            background: var(--user-msg);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
-        }
+    /* Typing indicator */
+    #typing { display: none; }
+    #typing.visible { display: flex; align-items: center; gap: 8px; }
+    #typing-bubble {
+      padding: 12px 18px;
+      background: #eaf4fb;
+      border-radius: 18px 18px 18px 4px;
+      border: 1px solid #c5e0f0;
+      display: flex; gap: 5px; align-items: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #1a91d1;
+      animation: bounce 1s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
 
-        .chat-input-area {
-            padding: 16px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 8px;
-        }
+    /* Input area */
+    #input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #d0e4f0;
+      background: #f7fbfe;
+      display: flex;
+      gap: 10px;
+    }
+    #user-input {
+      flex: 1;
+      background: #ffffff;
+      border: 2px solid #a8d4ed;
+      border-radius: 14px;
+      padding: 12px 16px;
+      color: #1a3a4a;
+      font-size: 14px;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: border 0.2s;
+    }
+    #user-input:focus { border-color: #1a91d1; }
+    #user-input::placeholder { color: #7aafc9; }
+    #user-input:disabled { background: #f0f0f0; cursor: not-allowed; }
 
-        .chat-input-area input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
-            font-size: 0.95rem;
-        }
-
-        .chat-input-area button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .chat-input-area button:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .landing-link {
-            color: #0066cc;
-            font-weight: bold;
-            text-decoration: underline;
-        }
-    </style>
+    #send-btn {
+      background: linear-gradient(135deg, #1a91d1, #5bc8f5);
+      border: none;
+      border-radius: 14px;
+      width: 48px; height: 48px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.2s;
+    }
+    #send-btn:disabled { opacity: 0.4; cursor: default; }
+  </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">
-        SAM - Travel Assistant
+<div id="chat-container">
+  <div id="chat-header">
+    <div id="header-avatar">🌍</div>
+    <div>
+      <div id="header-name">SAM</div>
+      <div id="header-sub">Your Travel Assistant AI ✈️</div>
     </div>
-    <div class="chat-messages" id="chatMessages">
-        <div class="message bot">
-            Ciao! Sono SAM, il tuo assistente di viaggio. Come posso aiutarti oggi a pianificare il tuo itinerario?
-        </div>
+    <div id="header-status">
+      <div id="status-dot"></div>
+      <span id="status-label">Online</span>
     </div>
-    <div class="chat-input-area">
-        <input type="text" id="userInput" placeholder="Scrivi un messaggio..." onkeydown="if(event.key==='Enter') sendMessage()" />
-        <button id="sendBtn" onclick="sendMessage()">Invia</button>
+  </div>
+
+  <div id="messages">
+    <div class="msg-row assistant">
+      <div class="msg-avatar">🌍</div>
+      <div class="msg-bubble assistant">
+        Hello! I'm <strong>SAM</strong>, your personal travel assistant 🌍✈️<br><br>
+        I'll help you discover Abruzzo.<br>What would you like to know about this alluring region?
+      </div>
     </div>
+
+    <div id="typing">
+      <div class="msg-avatar">🌍</div>
+      <div id="typing-bubble">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <input id="user-input" type="text" placeholder="Ask about a destination, itinerary, tips..."
+      onkeydown="if(event.key==='Enter') sendMessage()" />
+    <button id="send-btn" onclick="sendMessage()">✈️</button>
+  </div>
 </div>
 
 <script>
-    // 1. Estrazione dinamica dell'ID arrivato da Qualtrics
-    const urlParams = new URLSearchParams(window.location.search);
-    let sessionId = urlParams.get('session_id') || urlParams.get('uid');
+  const SURVEY_CODE = "CS4685LR";
 
-    if (!sessionId) {
-        sessionId = 'RESP_' + Math.random().toString(36).substr(2, 9);
+  // Legge il parametro session_id o uid dall'URL con fallback automatico
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session_id') || urlParams.get('uid') || 'unknown';
+
+  let history = [];
+  let userMsgCount = 0;
+  let loading = false;
+
+  function renderMarkdown(text) {
+    const markdownLinks = [];
+
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
+      const placeholder = `@@MARKDOWN_LINK_${markdownLinks.length}@@`;
+      markdownLinks.push(`<a href="${url}" target="_blank" rel="noopener noreferrer">${label} 🔗</a>`);
+      return placeholder;
+    });
+
+    text = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+        const trailingPunctuation = url.match(/[.,!?;:]+$/)?.[0] || '';
+        const cleanUrl = url.slice(0, url.length - trailingPunctuation.length);
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl} 🔗</a>${trailingPunctuation}`;
+      })
+      .replace(/\n/g, '<br/>');
+
+    markdownLinks.forEach((link, index) => {
+      text = text.replace(`@@MARKDOWN_LINK_${index}@@`, link);
+    });
+
+    return text;
+  }
+
+  // Rimuove qualsiasi link generato casualmente durante la conversazione
+  function stripUnwantedLinks(text) {
+    return text
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/gi, '$1')
+      .replace(/https?:\/\/[^\s<>()]+/gi, '');
+  }
+
+  function appendMessage(role, content) {
+    const messages = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${role}`;
+
+    if (role === 'assistant') {
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.textContent = '🌍';
+      row.appendChild(avatar);
     }
 
-    let messageCount = 0;
-    const maxMessages = 4;
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble ${role}`;
+    bubble.innerHTML = renderMarkdown(content);
+    row.appendChild(bubble);
 
-    // Costruzione dell'URL per la Landing Page sincronizzato con l'ID utente
-    const landingUrl = "https://landingpage20.github.io/abruzzo/?session_id=" + encodeURIComponent(sessionId) + "&uid=" + encodeURIComponent(sessionId);
+    messages.insertBefore(row, typing);
+    messages.scrollTop = messages.scrollHeight;
+  }
 
-    function appendMessage(sender, text) {
-        const messagesContainer = document.getElementById('chatMessages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'message ' + sender;
-        msgDiv.innerHTML = text;
-        messagesContainer.appendChild(msgDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  async function sendMessage(text) {
+    const input = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const userText = text || input.value.trim();
+    if (!userText || loading || userMsgCount >= 5) return;
+
+    input.value = '';
+    appendMessage('user', userText);
+    userMsgCount++;
+
+    // Se siamo al 5° messaggio, instruiamo l'AI a rispondere in modo conclusivo senza porre domande
+    const payloadMessages = history.map(m => ({ ...m }));
+    if (userMsgCount === 5) {
+      payloadMessages.push({
+        role: 'user',
+        content: userText + " (IMPORTANT INSTRUCTION FOR THIS FINAL TURN: Answer directly and conclusively. Do NOT ask any follow-up question or offer further options, as this is the user's last message.)"
+      });
+    } else {
+      payloadMessages.push({ role: 'user', content: userText });
     }
 
-    function sendMessage() {
-        const input = document.getElementById('userInput');
-        const text = input.value.trim();
-        if (!text) return;
+    loading = true;
+    sendBtn.disabled = true;
+    input.disabled = true;
+    document.getElementById('typing').classList.add('visible');
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
 
-        appendMessage('user', text);
-        input.value = '';
-        messageCount++;
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: payloadMessages
+        })
+      });
 
-        if (messageCount >= maxMessages) {
-            document.getElementById('userInput').disabled = true;
-            document.getElementById('sendBtn').disabled = true;
+      const data = await res.json();
+      
+      // Pulisce la risposta per evitare che l'AI inserisca link non autorizzati
+      let reply = stripUnwantedLinks(data.reply || "Sorry, I didn't understand. Please try again!");
 
-            setTimeout(() => {
-                const finalReply = "Grazie per aver chattato con me! Il tuo codice di verifica per Qualtrics è: <b>CS4685LR</b>.<br><br>" +
-                                   "Puoi ora scoprire di più sulla tua destinazione cliccando qui: " +
-                                   "<a href='" + landingUrl + "' target='_blank' rel='noopener noreferrer' class='landing-link'>Scopri l'Abruzzo</a>";
-                appendMessage('bot', finalReply);
-            }, 800);
-        } else {
-            setTimeout(() => {
-                const replies = [
-                    "Interessante! L'Abruzzo offre paesaggi mozzafiato tra mare e montagna.",
-                    "Ottima scelta. Ci sono molti borghi storici e parchi naturali da esplorare.",
-                    "Posso suggerirti ottime esperienze sia sulla Costa dei Trabocchi che sul Gran Sasso.",
-                    "Perfetto, sto registrando le tue preferenze per la destinazione."
-                ];
-                const reply = replies[(messageCount - 1) % replies.length];
-                appendMessage('bot', reply);
-            }, 800);
-        }
+      // Al 5° messaggio dell'utente genera il link dinamico completo con session_id e uid
+      if (userMsgCount === 3) {
+        const encodedId = encodeURIComponent(sessionId);
+        const finalUrl = `https://landingpage20.github.io/abruzzo/?session_id=${encodedId}&uid=${encodedId}`;
+        reply += `\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: ${finalUrl}`;
+      }
+
+      history.push({ role: 'user', content: userText });
+      history.push({ role: 'assistant', content: reply });
+      
+      document.getElementById('typing').classList.remove('visible');
+      appendMessage('assistant', reply);
+
+    } catch (e) {
+      document.getElementById('typing').classList.remove('visible');
+      appendMessage('assistant', `⚠️ Communication error: ${e.message}`);
     }
+
+    loading = false;
+    
+    // Ripristina l'input solo se non si è raggiunto il quinto messaggio
+    if (userMsgCount < 5) {
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
+    } else {
+      input.placeholder = "You have completed the maximum number of messages.";
+    }
+  }
 </script>
 
 </body>
