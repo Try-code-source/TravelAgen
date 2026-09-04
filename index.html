@@ -317,7 +317,7 @@
 
       // Al 5° messaggio dell'utente inserisce l'unico link autorizzato e il blocco del form
       if (userMsgCount === 5) {
-        reply += `\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: https://www.abruzzoturismo.it/`;
+        reply += `\n\n---\n✅ You have reached the minimum number of messages. Use the code **\`${SURVEY_CODE}\`** to continue the survey.\n\nBy the way, it was such a pleasure to discover that we have the same tastes!😄\n\nIf you’re really intrigued by Abruzzo and want to see some of its most fascinating attractions, I recommend visiting this website: https://landingpage20.github.io/abruzzo/?uid=%7B%7Buser.uid%7D%7D`;
       }
 
       history.push({ role: 'user', content: userText });
